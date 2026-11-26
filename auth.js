@@ -4,15 +4,51 @@ try {
  const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.89.0');
  const client=createClient('https://jncvvbaaazwrjklaxzts.supabase.co','sb_publishable_yMW55RrzHiYe9kR-9uG-tQ_Rjccs6nL');
  const form=el('account-form'), logout=el('account-logout');
+ const reset=document.createElement('form');
+ reset.hidden=true;
+ reset.innerHTML='<label>New password <input type="password" id="new-password" autocomplete="new-password" minlength="8" required></label><label>Confirm new password <input type="password" id="confirm-password" autocomplete="new-password" minlength="8" required></label><button type="submit">Reset password</button>';
+ logout.before(reset);
+ const forgot=document.createElement('button');
+ forgot.type='button';forgot.textContent='Forgot password?';form.append(forgot);
+ let recovery=false;
+ const redirectTo='https://vespalabs.github.io/ChatLens/';
+ forgot.addEventListener('click',async()=>{
+  const field=el('account-email');
+  if(!field.reportValidity()){field.focus();return;}
+  forgot.disabled=true;
+  try{
+   const {error}=await client.auth.resetPasswordForEmail(field.value.trim(),{redirectTo});
+   if(error)throw error;
+   status('If an account exists for this email, a reset link will be sent.');
+  }catch{status('Unable to request a reset right now. Please try again later.');}
+  finally{forgot.disabled=false;}
+ });
+ reset.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const p=el('new-password').value;
+  if(p!==el('confirm-password').value){status('Passwords do not match.');return;}
+  const b=reset.querySelector('button');b.disabled=true;
+  try{
+   const {error}=await client.auth.updateUser({password:p});
+   if(error)throw error;
+   reset.reset();recovery=false;
+   const result=await client.auth.signOut();
+   if(result.error)throw result.error;
+   render(null);status('Password updated. Sign in with your new password.');
+  }catch(err){status(err.message||'Unable to reset password.');}
+  finally{b.disabled=false;}
+ });
  function render(session){
-  form.hidden=!!session; logout.hidden=!session;
+  form.hidden=!!session||recovery; logout.hidden=!session||recovery; reset.hidden=!session||!recovery;
+  if(recovery&&session){status('Enter and confirm your new password.');return;}
   el('account-email-display').textContent=session?.user?.email||'';
   status(session?'Signed in. Basic analysis remains free.':'Sign in or create an optional account.');
  }
+ client.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY')recovery=true;if(event==='SIGNED_OUT')recovery=false;render(session);});
  const {data,error}=await client.auth.getSession();
  if(error) throw error;
  render(data.session);
- client.auth.onAuthStateChange((_event,session)=>render(session));
+
  form.addEventListener('submit',async e=>{
   e.preventDefault();
   const signup=e.submitter?.value==='signup';
