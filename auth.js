@@ -10,7 +10,13 @@ try {
  logout.before(reset);
  const forgot=document.createElement('button');
  forgot.type='button';forgot.textContent='Forgot password?';form.append(forgot);
- let recovery=false;
+ let recovery=false,planRequest=0;
+ function showPlan(session){
+  const target=el('account-plan');if(!target)return;
+  const ticket=++planRequest;target.textContent=session?'Checking account plan…':'';
+  if(!session)return;
+  setTimeout(async()=>{try{const {data,error}=await client.from('entitlements').select('plan').eq('user_id',session.user.id).maybeSingle();if(error)throw error;if(ticket===planRequest)target.textContent=data?.plan==='premium'?'Current plan: Premium (paid features not yet available)':'Current plan: Free';}catch{if(ticket===planRequest)target.textContent='Account plan temporarily unavailable. Free analysis is still available.';}},0);
+ }
  const redirectTo='https://vespalabs.github.io/ChatLens/';
  forgot.addEventListener('click',async()=>{
   const field=el('account-email');
@@ -40,6 +46,7 @@ try {
  });
  function render(session){
   form.hidden=!!session||recovery; logout.hidden=!session||recovery; reset.hidden=!session||!recovery;
+  showPlan(recovery?null:session);
   if(recovery&&session){status('Enter and confirm your new password.');return;}
   el('account-email-display').textContent=session?.user?.email||'';
   status(session?'Signed in. Basic analysis remains free.':'Sign in or create an optional account.');
