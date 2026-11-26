@@ -17,6 +17,30 @@ try {
   if(!session)return;
   setTimeout(async()=>{try{const {data,error}=await client.from('entitlements').select('plan').eq('user_id',session.user.id).maybeSingle();if(error)throw error;if(ticket===planRequest)target.textContent=data?.plan==='premium'?'Current plan: Premium (paid features not yet available)':'Current plan: Free';}catch{if(ticket===planRequest)target.textContent='Account plan temporarily unavailable. Free analysis is still available.';}},0);
  }
+
+ const premiumCard=[...document.querySelectorAll('h3')].find(x=>x.textContent.trim()==='Premium report')?.parentElement;
+ if(premiumCard){
+ const pay=document.createElement('button');pay.type='button';pay.textContent='Test checkout — ₹99';
+ const result=document.createElement('p');result.setAttribute('role','status');result.textContent='Sandbox only. No real charges or premium access.';
+ premiumCard.append(pay,result);
+ pay.onclick=async()=>{
+ pay.disabled=true;
+ try{
+ const {data:{session},error}=await client.auth.getSession();
+ if(error||!session){result.textContent='Sign in to ChatLens first.';return;}
+ result.textContent='Creating test order…';
+ const {data,error:orderError}=await client.functions.invoke('razorpay-create-order',{body:{}});
+ if(orderError){let msg=orderError.message;try{msg=(await orderError.context.json()).error||msg}catch{}throw new Error(msg);}
+ if(!data?.success||!data.key_id?.startsWith('rzp_test_')||data.amount!==9900||data.currency!=='INR'||!data.order_id)throw new Error('Unexpected test order response');
+ if(!window.Razorpay)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://checkout.razorpay.com/v1/checkout.js';s.onload=resolve;s.onerror=()=>reject(new Error('Checkout could not load'));document.head.append(s)});
+ result.textContent='Test order created. Opening sandbox checkout.';
+ const checkout=new window.Razorpay({key:data.key_id,amount:data.amount,currency:data.currency,order_id:data.order_id,name:'Vespa Labs',description:'ChatLens test report — no real charge',handler:()=>{result.textContent='Sandbox checkout returned success. Server verification is pending; no premium access granted.';},modal:{ondismiss:()=>{pay.disabled=false;}}});
+ checkout.on('payment.failed',()=>{result.textContent='Test payment failed. No premium access granted.';});
+ checkout.open();
+ }catch(e){result.textContent=e.message||'Test checkout unavailable.';}
+ finally{pay.disabled=false;}
+ };
+ }
  const redirectTo='https://vespalabs.github.io/ChatLens/';
  forgot.addEventListener('click',async()=>{
   const field=el('account-email');
