@@ -41,6 +41,38 @@ try {
  finally{pay.disabled=false;}
  };
  }
+
+ const dashboard=document.createElement('section');
+ dashboard.hidden=true;
+ dashboard.innerHTML='<h3>My Account</h3><div class="tabs" role="group" aria-label="Account sections"></div><div class="account-panel"></div>';
+ logout.before(dashboard);
+ const tabs=dashboard.querySelector('.tabs'),panel=dashboard.querySelector('.account-panel');
+ let accountUser=null,activeTab='Overview';
+ const storageKey=()=> 'chatlens-reports:'+accountUser;
+ const readReports=()=>{try{return JSON.parse(localStorage.getItem(storageKey())||'[]')}catch{return []}};
+ function drawAccount(){
+  dashboard.hidden=!accountUser||recovery;
+  if(dashboard.hidden){panel.replaceChildren();return;}
+  for(const b of tabs.children)b.classList.toggle('active',b.textContent===activeTab);
+  panel.replaceChildren();
+  const p=t=>{const x=document.createElement('p');x.textContent=t;panel.append(x);return x};
+  const button=(t,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;panel.append(b);return b};
+  if(activeTab==='Overview'){p('Your account and plan are shown above. Basic analysis remains free.');p('Saved reports: '+readReports().length+' on this browser.');}
+  if(activeTab==='My Reports'){
+   p('Reports are saved only when you choose Save to My Reports. They remain on this browser, not in the cloud. Anyone with access to this browser storage may access them.');
+   const records=readReports();if(!records.length)p('No saved reports on this device.');
+   for(const record of records){p('Report · '+new Date(record.date).toLocaleString());button('Download PDF',()=>{const a=document.createElement('a');a.href=record.pdf;a.download='ChatLens-report.pdf';a.click()});button('Delete report',()=>{try{localStorage.setItem(storageKey(),JSON.stringify(readReports().filter(x=>x.id!==record.id)));drawAccount()}catch{p('Unable to delete report.')}});}
+  }
+  if(activeTab==='Payment History')p('Verified payment history and receipts are not available yet. Checkout is currently a sandbox; no real payments are accepted.');
+  if(activeTab==='Help & Support'){p('File upload: export WhatsApp without media, accept privacy consent, and choose TXT or ZIP. If ZIP fails, extract it in Files first.');p('PDF: use Download PDF or Share PDF after analysis.');p('Billing: checkout is test-only. Live billing and refund support are not yet available.');p('Support contact and ticket submission are pending. Do not share private chats or payment secrets.');}
+  if(activeTab==='Settings'){p('Use Forgot password on the sign-in screen to reset your password.');button('Delete all saved reports on this device',()=>{if(confirm('Delete your saved reports from this browser?')){try{localStorage.removeItem(storageKey());drawAccount()}catch{p('Unable to delete reports.')}}});}
+ }
+ for(const name of ['Overview','My Reports','Payment History','Help & Support','Settings']){const b=document.createElement('button');b.type='button';b.textContent=name;b.onclick=()=>{activeTab=name;drawAccount()};tabs.append(b)}
+ window.addEventListener('chatlens-save-report',async e=>{
+  const user=accountUser,notify=e.detail.notify;if(!user||recovery){notify('Sign in to save a report.');return;}
+  if(!confirm('Save this private PDF in this browser? It is not encrypted by ChatLens.'))return;
+  try{const reader=new FileReader();const pdf=await new Promise((resolve,reject)=>{reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(e.detail.file)});if(accountUser!==user)return;const records=readReports();records.unshift({id:crypto.randomUUID(),date:Date.now(),pdf});localStorage.setItem(storageKey(),JSON.stringify(records));drawAccount();notify('Saved to My Reports on this device.');}catch{notify('Unable to save report. Browser storage may be full.');}
+ });
  const redirectTo='https://vespalabs.github.io/ChatLens/';
  forgot.addEventListener('click',async()=>{
   const field=el('account-email');
@@ -70,6 +102,7 @@ try {
  });
  function render(session){
   form.hidden=!!session||recovery; logout.hidden=!session||recovery; reset.hidden=!session||!recovery;
+  accountUser=session?.user?.id||null;drawAccount();
   showPlan(recovery?null:session);
   if(recovery&&session){status('Enter and confirm your new password.');return;}
   el('account-email-display').textContent=session?.user?.email||'';
