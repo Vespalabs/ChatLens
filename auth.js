@@ -15,7 +15,7 @@ try {
   const target=el('account-plan');if(!target)return;
   const ticket=++planRequest;target.textContent=session?'Checking account plan…':'';
   if(!session)return;
-  setTimeout(async()=>{try{const {data,error}=await client.from('entitlements').select('plan').eq('user_id',session.user.id).maybeSingle();if(error)throw error;if(ticket===planRequest)target.textContent=data?.plan==='premium'?'Current plan: Free (paid features locked)':'Current plan: Free';}catch{if(ticket===planRequest)target.textContent='Account plan temporarily unavailable. Free analysis is still available.';}},0);
+  setTimeout(async()=>{try{const {data,error}=await client.from('entitlements').select('plan').eq('user_id',session.user.id).maybeSingle();if(error)throw error;if(ticket===planRequest)target.textContent=data?.plan==='premium'?'Current plan: Free (paid features locked)':'Current plan: Free';}catch{if(ticket===planRequest)target.textContent='Account plan temporarily unavailable. Please try again later.';}},0);
  }
 
  const dashboard=document.createElement('section');
@@ -38,7 +38,7 @@ try {
   panel.replaceChildren();
   const p=t=>{const x=document.createElement('p');x.textContent=t;panel.append(x);return x};
   const button=(t,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;panel.append(b);return b};
-  if(activeTab==='Overview'){p('Your account and plan are shown above. Basic analysis remains free.');p('Saved reports: '+readReports().length+' on this browser.');const user=accountUser;const purchases=p('Checking purchases…');setTimeout(async()=>{try{const {data,error}=await client.from('chatlens_purchases').select('product,active,test_mode,created_at').eq('user_id',user).order('created_at',{ascending:false}).limit(100);if(!purchases.isConnected||accountUser!==user)return;if(error)throw error;purchases.textContent='Verified sandbox purchases: '+data.filter(x=>x.test_mode).length+' · Active live purchases: '+data.filter(x=>!x.test_mode&&x.active).length;}catch{if(purchases.isConnected)purchases.textContent='Purchase records unavailable.';}},0);}
+  if(activeTab==='Overview'){p('Your account and plan are shown above. Three free analyses per account.');p('Saved reports: '+readReports().length+' on this browser.');const user=accountUser;const purchases=p('Checking purchases…');setTimeout(async()=>{try{const {data,error}=await client.from('chatlens_purchases').select('product,active,test_mode,created_at').eq('user_id',user).order('created_at',{ascending:false}).limit(100);if(!purchases.isConnected||accountUser!==user)return;if(error)throw error;purchases.textContent='Verified sandbox purchases: '+data.filter(x=>x.test_mode).length+' · Active live purchases: '+data.filter(x=>!x.test_mode&&x.active).length;}catch{if(purchases.isConnected)purchases.textContent='Purchase records unavailable.';}},0);}
   if(activeTab==='My Reports'){
    p('Reports are saved only when you choose Save to My Reports. New reports are encrypted with a passphrase on this browser, not in the cloud. Older reports may be unencrypted; delete and recreate them if needed. Lost passphrases cannot be recovered.');
    const records=readReports();if(!records.length)p('No saved reports on this device.');
@@ -93,13 +93,17 @@ try {
   }catch(err){status(err.message||'Unable to reset password.');}
   finally{b.disabled=false;}
  });
+ let quotaEpoch=0;
+ async function refreshQuota(){const epoch=++quotaEpoch,user=accountUser,target=el('quota-status');if(!user||recovery){target.textContent='Sign in to unlock three free analyses.';return;}target.textContent='Checking allowance…';try{const {data,error}=await client.from('chatlens_usage').select('used').eq('user_id',user).maybeSingle();if(error)throw error;if(epoch===quotaEpoch)target.textContent=(3-(data?.used||0))+' of 3 free analyses remaining';}catch{if(epoch===quotaEpoch)target.textContent='Allowance unavailable. Please try again later.';}}
+ window.chatlensCanAnalyse=()=>!!accountUser&&!recovery;
+ window.chatlensConsumeAnalysis=async()=>{const user=accountUser;if(!user||recovery)throw Error('Sign in to analyse your chat.');const {data,error}=await client.rpc('chatlens_consume_analysis');if(error)throw Error('Unable to verify analysis allowance. Try again later.');if(user!==accountUser||recovery)throw Error('Account changed. Sign in again.');await refreshQuota();if(data===-1)throw Error('All three free analyses have been used. Premium is coming soon.');if(!Number.isInteger(data)||data<0||data>2)throw Error('Invalid allowance response.');return data;};
  function render(session){
   form.hidden=!!session||recovery; logout.hidden=!session||recovery; reset.hidden=!session||!recovery;
-  accountUser=session?.user?.id||null;drawAccount();
+  accountUser=session?.user?.id||null;drawAccount();void refreshQuota();
   showPlan(recovery?null:session);
   if(recovery&&session){status('Enter and confirm your new password.');return;}
   el('account-email-display').textContent=session?.user?.email||'';
-  status(session?'Signed in. Basic analysis remains free.':'Sign in or create an optional account.');
+  status(session?'Signed in. Three free analyses per account.':'Sign in or create an account to analyse chats.');
  }
  client.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY')recovery=true;if(event==='SIGNED_OUT')recovery=false;render(session);});
  const {data,error}=await client.auth.getSession();
@@ -122,4 +126,4 @@ try {
   finally{buttons.forEach(b=>b.disabled=false);}
  });
  logout.addEventListener('click',async()=>{try{const {error}=await client.auth.signOut();if(error)throw error;render(null);}catch(err){status(err.message||'Sign out failed.');}});
-}catch{status('Account service unavailable. You can still use local chat analysis.');}
+}catch{status('Account service unavailable. Sign in is required for analysis.');}
