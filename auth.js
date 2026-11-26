@@ -95,11 +95,12 @@ try {
  });
  let quotaEpoch=0;
  async function refreshQuota(){const epoch=++quotaEpoch,user=accountUser,target=el('quota-status');if(!user||recovery){target.textContent='Sign in to unlock three free analyses.';return;}target.textContent='Checking allowance…';try{const {data,error}=await client.from('chatlens_usage').select('used').eq('user_id',user).maybeSingle();if(error)throw error;if(epoch===quotaEpoch)target.textContent=(3-(data?.used||0))+' of 3 free analyses remaining';}catch{if(epoch===quotaEpoch)target.textContent='Allowance unavailable. Please try again later.';}}
+ window.chatlensAnalysisOwner=()=>recovery?null:accountUser;
  window.chatlensCanAnalyse=()=>!!accountUser&&!recovery;
  window.chatlensConsumeAnalysis=async()=>{const user=accountUser;if(!user||recovery)throw Error('Sign in to analyse your chat.');const {data,error}=await client.rpc('chatlens_consume_analysis');if(error)throw Error('Unable to verify analysis allowance. Try again later.');if(user!==accountUser||recovery)throw Error('Account changed. Sign in again.');await refreshQuota();if(data===-1)throw Error('All three free analyses have been used. Premium is coming soon.');if(!Number.isInteger(data)||data<0||data>2)throw Error('Invalid allowance response.');return data;};
  function render(session){
   form.hidden=!!session||recovery; logout.hidden=!session||recovery; reset.hidden=!session||!recovery;
-  accountUser=session?.user?.id||null;drawAccount();void refreshQuota();
+  const nextUser=session?.user?.id||null;if(accountUser!==nextUser){el('out')?.replaceChildren();if(el('file'))el('file').value='';if(el('file-info'))el('file-info').textContent='';if(el('status'))el('status').textContent='Waiting for a file.';}accountUser=nextUser;drawAccount();setTimeout(()=>void refreshQuota(),0);
   showPlan(recovery?null:session);
   if(recovery&&session){status('Enter and confirm your new password.');return;}
   el('account-email-display').textContent=session?.user?.email||'';
