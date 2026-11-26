@@ -15,31 +15,7 @@ try {
   const target=el('account-plan');if(!target)return;
   const ticket=++planRequest;target.textContent=session?'Checking account plan…':'';
   if(!session)return;
-  setTimeout(async()=>{try{const {data,error}=await client.from('entitlements').select('plan').eq('user_id',session.user.id).maybeSingle();if(error)throw error;if(ticket===planRequest)target.textContent=data?.plan==='premium'?'Current plan: Premium (paid features not yet available)':'Current plan: Free';}catch{if(ticket===planRequest)target.textContent='Account plan temporarily unavailable. Free analysis is still available.';}},0);
- }
-
- const premiumCard=[...document.querySelectorAll('h3')].find(x=>x.textContent.trim()==='Premium report')?.parentElement;
- if(premiumCard){
- const pay=document.createElement('button');pay.type='button';pay.textContent='Test checkout — ₹99';
- const result=document.createElement('p');result.setAttribute('role','status');result.textContent='Sandbox only. No real charges or premium access.';
- premiumCard.append(pay,result);
- pay.onclick=async()=>{
- pay.disabled=true;
- try{
- const {data:{session},error}=await client.auth.getSession();
- if(error||!session){result.textContent='Sign in to ChatLens first.';return;}
- result.textContent='Creating test order…';
- const {data,error:orderError}=await client.functions.invoke('razorpay-create-order',{body:{}});
- if(orderError){let msg=orderError.message;try{msg=(await orderError.context.json()).error||msg}catch{}throw new Error(msg);}
- if(!data?.success||!data.key_id?.startsWith('rzp_test_')||data.amount!==9900||data.currency!=='INR'||!data.order_id)throw new Error('Unexpected test order response');
- if(!window.Razorpay)await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://checkout.razorpay.com/v1/checkout.js';s.onload=resolve;s.onerror=()=>reject(new Error('Checkout could not load'));document.head.append(s)});
- result.textContent='Test order created. Opening sandbox checkout.';
- const checkout=new window.Razorpay({key:data.key_id,amount:data.amount,currency:data.currency,order_id:data.order_id,name:'Vespa Labs',description:'ChatLens test report — no real charge',handler:async response=>{result.textContent='Verifying sandbox payment…';try{const {data:verified,error}=await client.functions.invoke('razorpay-verify-payment',{body:{razorpay_order_id:data.order_id,razorpay_payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature}});if(error||!verified?.verified||!verified.test_mode)throw Error('Verification pending or unsuccessful. Check Payment History before retrying.');result.textContent='Sandbox payment verified. No real charge or premium access.';if(activeTab==='Payment History')drawAccount();}catch(e){result.textContent=e.message;}},modal:{ondismiss:()=>{pay.disabled=false;}}});
- checkout.on('payment.failed',()=>{result.textContent='Test payment failed. No premium access granted.';});
- checkout.open();
- }catch(e){result.textContent=e.message||'Test checkout unavailable.';}
- finally{pay.disabled=false;}
- };
+  setTimeout(async()=>{try{const {data,error}=await client.from('entitlements').select('plan').eq('user_id',session.user.id).maybeSingle();if(error)throw error;if(ticket===planRequest)target.textContent=data?.plan==='premium'?'Current plan: Free (paid features locked)':'Current plan: Free';}catch{if(ticket===planRequest)target.textContent='Account plan temporarily unavailable. Free analysis is still available.';}},0);
  }
 
  const dashboard=document.createElement('section');
@@ -67,7 +43,7 @@ try {
    p('Sandbox transactions only. No real charges.');const user=accountUser;const loading=p('Loading transactions…');
    setTimeout(async()=>{try{const {data,error}=await client.from('chatlens_payments').select('razorpay_order_id,razorpay_payment_id,amount,currency,status,test_mode,created_at').eq('user_id',user).order('created_at',{ascending:false}).limit(100);if(!loading.isConnected||accountUser!==user)return;if(error)throw error;loading.textContent=data.length?'Latest transactions':'No transactions yet.';for(const item of data){p(new Date(item.created_at).toLocaleString()+' · '+item.currency+' '+(item.amount/100).toFixed(2)+' · '+item.status+' · '+(item.test_mode?'TEST':'LIVE'));p(item.razorpay_payment_id||item.razorpay_order_id);}}catch{if(loading.isConnected)loading.textContent='Unable to load transactions. Try again later.';}},0);
   }
-  if(activeTab==='Help & Support'){p('File upload: export WhatsApp without media, accept privacy consent, and choose TXT or ZIP. If ZIP fails, extract it in Files first.');p('PDF: use Download PDF or Share PDF after analysis.');p('Billing: checkout is test-only. Live billing and refund support are not yet available.');p('Do not include private chats, passwords or payment secrets in support requests.');
+  if(activeTab==='Help & Support'){p('File upload: export WhatsApp without media, accept privacy consent, and choose TXT or ZIP. If ZIP fails, extract it in Files first.');p('PDF: use Download PDF or Share PDF after analysis.');p('Billing: paid plans and checkout are currently disabled.');p('Do not include private chats, passwords or payment secrets in support requests.');
    const user=accountUser;
    const subject=document.createElement('input');subject.placeholder='Subject';subject.maxLength=150;subject.setAttribute('aria-label','Support subject');
    const category=document.createElement('select');category.setAttribute('aria-label','Support category');for(const name of ['general','technical','billing','refund','privacy'])category.add(new Option(name,name));
