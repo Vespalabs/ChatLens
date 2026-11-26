@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChatInsight</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  background: #0f172a;
+  color: #f8fafc;
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 24px;
+}
+main {
+  max-width: 600px;
+  margin: auto;
+}
+h1 { color: #2dd4bf; }
+p { color: #cbd5e1; }
+.card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 16px;
+  margin: 20px 0;
+}
+input { width: 100%; }
+button {
+  background: #2dd4bf;
+  color: #0f172a;
+  border: none;
+  padding: 15px;
+  width: 100%;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  margin-top: 16px;
+}
+.track {
+  background: #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 12px;
+  margin-bottom: 20px;
+}
+.bar {
+  background: #2dd4bf;
+  height: 100%;
+}
+small { color: #94a3b8; }
+</style>
+</head>
+<body>
+<main>
+<h1>ChatInsight</h1>
+<p>Understand your conversations.</p>
+
+<div class="card">
+<h2>Import WhatsApp Chat</h2>
+<p>Select your exported WhatsApp TXT file.</p>
+<input type="file" id="file" accept=".txt,text/plain">
+<button onclick="analyze()">Analyze Chat</button>
+<p><small>Your chat stays on your device in this prototype.</small></p>
+</div>
+
+<div id="results" aria-live="polite"></div>
+
+<script>
+async function analyze() {
+  const file = document.getElementById("file").files[0];
+  const results = document.getElementById("results");
+  results.replaceChildren();
+
+  if (!file) {
+    results.textContent = "Please select a TXT file.";
+    return;
+  }
+
+  try {
+    const text = await file.text();
+    const counts = new Map();
+    let total = 0;
+
+    for (const raw of text.split(/\r?\n/)) {
+      const line = raw.replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "");
+      const match = line.match(/^\[?\d{1,4}[\/.-]\d{1,2}[\/.-]\d{1,4},?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?(?:\]\s*|\s+-\s+)([^:]+):\s*(.*)$/i);
+
+      if (!match) continue;
+
+      const name = match[1].trim();
+      const message = match[2];
+
+      if (/messages and calls are end-to-end encrypted/i.test(message)) continue;
+      if (/^you (blocked|unblocked) this person/i.test(message)) continue;
+
+      counts.set(name, (counts.get(name) || 0) + 1);
+      total++;
+    }
+
+    if (!total) {
+      results.textContent = "No supported chat entries found. Check your WhatsApp export.";
+      return;
+    }
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const heading = document.createElement("h2");
+    heading.textContent = "Chat Analytics";
+    card.appendChild(heading);
+
+    const summary = document.createElement("p");
+    summary.textContent = "Total chat entries: " + total.toLocaleString();
+    card.appendChild(summary);
+
+    for (const [name, count] of [...counts].sort((a,b) => b[1]-a[1])) {
+      const percentage = (count / total * 100).toFixed(1);
+
+      const label = document.createElement("p");
+      label.textContent = name + ": " + count.toLocaleString() + " (" + percentage + "%)";
+      card.appendChild(label);
+
+      const track = document.createElement("div");
+      track.className = "track";
+
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      bar.style.width = percentage + "%";
+
+      track.appendChild(bar);
+      card.appendChild(track);
+    }
+
+    results.appendChild(card);
+  } catch (error) {
+    results.textContent = "Unable to read this file.";
+  }
+}
+</script>
+</main>
+</body>
+</html>
