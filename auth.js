@@ -2,14 +2,14 @@ const el=id=>document.getElementById(id);
 const status=msg=>el('account-status').textContent=msg;
 try {
  const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.89.0');
- const client=createClient('https://jncvvbaaazwrjklaxzts.supabase.co','sb_publishable_yMW55RrzHiYe9kR-9uG-tQ_Rjccs6nL');
- const form=el('account-form'), logout=el('account-logout');
+ const client=createClient('https://jncvvbaaazwrjklaxzts.supabase.co','sb_publishable_yMW55RrzHiYe9kR-9uG-tQ_Rjccs6nL',{auth:{storage:{getItem(k){return sessionStorage.getItem(k)??localStorage.getItem(k)},setItem(k,v){const persistent=el('remember-login')?.checked||!!localStorage.getItem('chatlens-remember-email');const target=persistent?localStorage:sessionStorage,other=persistent?sessionStorage:localStorage;target.setItem(k,v);other.removeItem(k)},removeItem(k){sessionStorage.removeItem(k);localStorage.removeItem(k)}}}});
+ const form=el('account-form'), logout=el('account-logout');const remember=el('remember-login');try{const saved=localStorage.getItem('chatlens-remember-email');if(saved){el('account-email').value=saved;remember.checked=true}}catch{}remember.onchange=()=>{if(!remember.checked)try{localStorage.removeItem('chatlens-remember-email')}catch{}};
  const reset=document.createElement('form');
  reset.hidden=true;
  reset.innerHTML='<label>New password <input type="password" id="new-password" autocomplete="new-password" minlength="8" required></label><label>Confirm new password <input type="password" id="confirm-password" autocomplete="new-password" minlength="8" required></label><button type="submit">Reset password</button>';
  logout.before(reset);
  const forgot=document.createElement('button');
- forgot.type='button';forgot.textContent='Forgot password?';form.append(forgot);
+ forgot.type='button';forgot.className='forgot-link';forgot.textContent='Forgot password?';form.append(forgot);
  let recovery=false,planRequest=0;
  function showPlan(session){
   const target=el('account-plan');if(!target)return;
@@ -69,7 +69,7 @@ try {
  const redirectTo='https://vespalabs.github.io/ChatLens/';
  forgot.addEventListener('click',async()=>{
   const field=el('account-email');
-  if(!field.reportValidity()){field.focus();return;}
+  if(!field.reportValidity()){field.focus();status('Enter your account email to receive a password reset link.');return;}
   forgot.disabled=true;
   try{
    const {error}=await client.auth.resetPasswordForEmail(field.value.trim(),{redirectTo});
@@ -112,6 +112,7 @@ try {
   const email=el('account-email').value.trim(),password=el('account-password').value;
   const buttons=form.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);
   try {
+   try{if(remember.checked)localStorage.setItem('chatlens-remember-email',email);else localStorage.removeItem('chatlens-remember-email')}catch{}
    const result=signup?await client.auth.signUp({email,password,options:{emailRedirectTo:'https://vespalabs.github.io/ChatLens/'}}):await client.auth.signInWithPassword({email,password});
    if(result.error) throw result.error;
    el('account-password').value='';
