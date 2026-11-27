@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+  <title>ChatLens · Conversation report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink:#211b2b; --muted:#625a69; --canvas:#f4f1f5; --card:#fff;
+      --line:#e5dfea; --accent:#603b85; --soft:#f1e8f8; --hero:#271c37;
+      --hero-end:#4a2c60; --hero-text:#f0e0fe; --lift:#d8b8ef;
+      font: 16px/1.5 "Segoe UI", system-ui, sans-serif;
+    }
+    [data-theme="teal"] {
+      --ink:#142b2a; --muted:#476260; --canvas:#eef5f3; --line:#d6e4e0;
+      --accent:#1d645d; --soft:#dff1ec; --hero:#132f31; --hero-end:#245653;
+      --hero-text:#ddf5ee; --lift:#a0ddcf;
+    }
+    [data-theme="terracotta"] {
+      --ink:#34241e; --muted:#695650; --canvas:#f8f1eb; --line:#eadbd1;
+      --accent:#943e2c; --soft:#f9e6dc; --hero:#38211e; --hero-end:#6e392d;
+      --hero-text:#fbe6d9; --lift:#ffc4a6;
+    }
+    body[data-mode="dark"] {
+      color-scheme: dark;
+      --ink:#f1eaf5; --muted:#c0b5c9; --canvas:#15131b; --card:#211e28;
+      --line:#393341; --soft:#332b3c;
+    }
+    body[data-theme="teal"][data-mode="dark"] {
+      --ink:#e7f5f1; --muted:#adc4be; --canvas:#10191a; --card:#192526;
+      --line:#2f4141; --soft:#243936;
+    }
+    body[data-theme="terracotta"][data-mode="dark"] {
+      --ink:#f7ece5; --muted:#ccb9ae; --canvas:#1c1513; --card:#2a201d;
+      --line:#493630; --soft:#3b2a24;
+    }
+    * { box-sizing:border-box }
+    [hidden] { display:none !important }
+    body { margin:0; color:var(--ink); background:var(--canvas); transition:background-color .25s ease,color .25s ease }
+    button, input, select { font:inherit }
+    button, summary { cursor:pointer }
+    a, button, summary, input, select { outline-offset:4px }
+    :focus-visible { outline:2px solid var(--accent) }
+    header { background:var(--card); border-bottom:1px solid var(--line) }
+    nav { max-width:1160px; margin:auto; min-height:72px; padding:12px 28px; display:flex; gap:10px; align-items:center }
+    .mark { width:34px; height:34px; border-radius:11px; background:var(--hero); display:grid; place-items:center }
+    .mark::before { content:""; width:13px; height:13px; border:2px solid var(--lift); border-radius:50%; box-shadow:4px 4px 0 -2px var(--lift) }
+    .wordmark { font-weight:700; font-size:1.15rem; letter-spacing:-.035em }
+    .preview-label { margin-inline-start:auto; color:var(--muted); font-size:.8rem }
+    .section-nav { display:flex; flex-wrap:wrap; gap:5px; margin:0 0 10px }
+    .section-nav a { color:var(--muted); text-decoration:none; padding:7px 9px; border-radius:8px; font-size:.86rem }
+    .section-nav a:hover { color:var(--ink); background:var(--soft) }
+    main { max-width:1160px; margin:auto; padding:30px 28px 48px }
+    .toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:18px }
+    .toolbar h1 { margin:0; font-size:clamp(1.35rem,3vw,1.9rem); letter-spacing:-.045em }
+    .toolbar-actions { display:flex; flex-wrap:wrap; gap:9px; align-items:center; justify-content:flex-end }
+    .themes { display:flex; flex-wrap:wrap; gap:6px }
+    .theme { display:flex; align-items:center; gap:7px; color:var(--ink); border:1px solid var(--line); background:var(--card); border-radius:9px; padding:8px 10px; min-height:44px; font-size:.8rem }
+    .theme[aria-pressed="true"] { background:var(--soft); border-color:var(--accent); font-weight:650 }
+    .mode-toggle,.report-action { min-height:44px; padding:8px 12px; border:1px solid var(--line); border-radius:9px; background:var(--card); color:var(--ink); font-size:.86rem }
+    .report-actions { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; justify-content:flex-end }
+    .report-action.primary { background:var(--accent); border-color:var(--accent); color:#fff }
+    .swatch { width:12px; height:12px; border-radius:50%; background:var(--swatch) }
+    .hero { border-radius:24px; padding:clamp(24px,4.7vw,52px); color:white; background:radial-gradient(ellipse at 95% 90%,var(--hero-end),transparent 66%),var(--hero); display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr); gap:32px; align-items:end }
+    .period { color:var(--lift); font-weight:650; font-size:.82rem; margin:0 0 8px }
+    .hero h2 { font:400 clamp(2.1rem,5vw,4rem)/1.02 Georgia,serif; letter-spacing:-.055em; margin:0 0 15px; max-width:18ch; overflow-wrap:anywhere }
+    .hero p:last-child { margin-bottom:0 }
+    .hero-copy { color:var(--hero-text); max-width:58ch; margin:0 }
+    .hero dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; margin:0 }
+    .hero dl div { border-top:1px solid #ffffff50; padding-top:12px; min-width:0 }
+    dt { color:var(--hero-text); font-size:.85rem }
+    dd { margin:0; font-size:clamp(1.5rem,3.2vw,2.35rem); line-height:1.15; font-weight:650; letter-spacing:-.045em; overflow-wrap:anywhere }
+    .dashboard { margin-top:16px; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:16px }
+    .panel { min-width:0; background:var(--card); border:1px solid var(--line); border-radius:19px; padding:clamp(17px,3vw,25px) }
+    .panel h2 { font-size:1.2rem; letter-spacing:-.035em; line-height:1.2; margin:0 0 6px }
+    .panel p { margin:8px 0; color:var(--muted); font-size:.88rem }
+    #activity { padding:0; margin:18px 0 0; list-style:none; display:grid; gap:9px }
+    .month { display:grid; grid-template-columns:4.2rem 1fr minmax(2.9rem,auto); gap:10px; align-items:center; font-size:.84rem }
+    .month-label { color:var(--muted) }
+    .month-count { text-align:right; font-variant-numeric:tabular-nums }
+    .track { background:var(--soft); border-radius:20px; height:9px; overflow:hidden }
+    .fill { display:block; height:100%; background:var(--accent); border-radius:20px }
+    .fill,.theme,.panel { transition:background-color .2s ease,border-color .2s ease,color .2s ease }
+    .participant-list { list-style:none; display:grid; gap:10px; padding:0; margin:16px 0 14px }
+    .participant { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 12px; font-size:.88rem }
+    .participant strong { overflow-wrap:anywhere }
+    .participant .track { grid-column:1/-1; height:6px }
+    .participant:nth-child(even) .fill { opacity:.63 }
+    .grade { display:inline-block; margin-top:7px; background:var(--soft); color:var(--accent); padding:4px 9px; border-radius:7px; font-size:.82rem; font-weight:650 }
+    details summary { color:var(--accent); font-size:.88rem; font-weight:650; padding:10px 0; min-height:44px }
+    .rules { margin:0; padding:0 0 0 18px; color:var(--muted); font-size:.86rem }
+    .replies { display:grid; gap:8px; margin:12px 0 0; padding:0; list-style:none; font-size:.88rem }
+    .replies li { display:flex; gap:12px; justify-content:space-between; border-top:1px solid var(--line); padding-top:8px }
+    .replies strong { overflow-wrap:anywhere }
+    .replies span { text-align:right }
+    .import { margin-top:16px }
+    .input-row { display:flex; align-items:end; flex-wrap:wrap; gap:12px; margin:10px 0 }
+    .input-row label { display:grid; gap:5px; color:var(--muted); font-size:.86rem; min-width:0 }
+    #files { max-width:100%; width:18rem }
+    select, input::file-selector-button, .action { min-height:44px; border:1px solid var(--line); border-radius:8px; padding:7px 10px; color:var(--ink); background:var(--card) }
+    .action { background:var(--accent); border-color:var(--accent); color:white; font-weight:650 }
+    .action:disabled { opacity:.55; cursor:wait }
+    .secondary { color:var(--accent); background:var(--card); border-color:var(--line) }
+    .import-status { min-height:1.3em }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { transition:none !important; scroll-behavior:auto !important } }
+    @media (max-width:650px) {
+      nav { min-height:61px; padding-inline:16px }
+      main { padding:18px 14px 30px }
+      .hero,.dashboard { grid-template-columns:1fr; gap:14px }
+      .hero { border-radius:18px; padding:22px; gap:23px }
+      .toolbar { gap:10px }
+    }
+    @media print {
+      header,.themes,.import { display:none }
+      main { max-width:none; padding:0 }
+      .hero,.panel { break-inside:avoid }
+      body { print-color-adjust:exact }
+    }
+  </style>
+  <script defer src="data-engine.js"></script>
+  <script defer src="whatsapp-import.js"></script>
+  <script defer src="report-preview.js"></script>
+</head>
+<body data-theme="plum">
+  <header><nav aria-label="ChatLens"><span class="mark" aria-hidden="true"></span><span class="wordmark">ChatLens</span><span class="preview-label">Private preview</span></nav></header>
+  <main>
+    <nav class="section-nav" aria-label="Report sections">
+      <a href="#report-overview">Overview</a>
+      <a href="#report-activity">Activity</a>
+      <a href="#report-people">People</a>
+      <a href="#report-context">Context</a>
+    </nav>
+    <div class="toolbar">
+      <h1>Conversation report</h1>
+      <div class="toolbar-actions">
+        <div class="themes" role="group" aria-label="Report colours">
+          <button class="theme" type="button" data-palette="plum" aria-pressed="true"><span class="swatch" style="--swatch:#603b85"></span>Plum</button>
+          <button class="theme" type="button" data-palette="teal" aria-pressed="false"><span class="swatch" style="--swatch:#1d645d"></span>Deep Teal</button>
+          <button class="theme" type="button" data-palette="terracotta" aria-pressed="false"><span class="swatch" style="--swatch:#943e2c"></span>Terracotta</button>
+        </div>
+        <button class="mode-toggle" id="mode-toggle" type="button" aria-pressed="false">Dark mode</button>
+      </div>
+    </div>
+    <div class="report-actions" aria-label="Report actions">
+      <button class="report-action" id="refresh-report" type="button">Refresh</button>
+      <button class="report-action" id="share-report" type="button">Share</button>
+      <button class="report-action primary" id="print-report" type="button">Print / save PDF</button>
+      <button class="report-action" id="download-report" type="button">Download text</button>
+    </div>
+    <section class="hero" id="report-overview" aria-labelledby="finding">
+      <div>
+        <p class="period" id="period"></p>
+        <h2 id="finding"></h2>
+        <p class="hero-copy" id="finding-detail"></p>
+      </div>
+      <dl><div><dt>Messages</dt><dd id="message-count"></dd></div><div><dt>Active days</dt><dd id="active-days"></dd></div></dl>
+    </section>
+    <div class="dashboard">
+      <section class="panel" id="report-activity" aria-labelledby="activity-title">
+        <h2 id="activity-title">Activity by month</h2>
+        <p id="activity-detail"></p>
+        <ul id="activity"></ul>
+      </section>
+      <section class="panel" id="report-people" aria-labelledby="share-title">
+        <h2 id="share-title">Message share</h2>
+        <p>Each person's share of messages in these exports.</p>
+        <strong class="grade" id="message-grade"></strong>
+        <ul class="participant-list" id="participants"></ul>
+        <details>
+          <summary>How message share is graded</summary>
+          <ul class="rules">
+            <li><strong>Evenly shared:</strong> the larger share is up to 60%.</li>
+            <li><strong>Uneven:</strong> the larger share is above 60% and up to 75%.</li>
+            <li><strong>Mostly from one sender:</strong> the larger share is above 75%.</li>
+          </ul>
+          <p>Grades describe message volume. They require two participants and at least 20 messages.</p>
+        </details>
+      </section>
+      <section class="panel" aria-labelledby="replies-title">
+        <h2 id="replies-title">Typical reply time</h2>
+        <p>Median elapsed time between messages from different senders, within the six-hour conversation window.</p>
+        <ul class="replies" id="replies"></ul>
+      </section>
+      <section class="panel" id="report-context" aria-labelledby="coverage-title">
+        <h2 id="coverage-title">What this report covers</h2>
+        <p id="coverage"></p>
+        <p>It covers messages in the selected files. Calls, in-person conversations, and messages outside those files may add context.</p>
+      </section>
+    </div>
+    <section class="panel import" aria-labelledby="import-title">
+      <h2 id="import-title">Try a WhatsApp export</h2>
+      <p>Choose TXT exports. Files are processed in this browser.</p>
+      <form id="import-form">
+        <div class="input-row">
+          <label>Export files<input id="files" type="file" accept=".txt,text/plain" multiple required></label>
+          <label>Date format<select id="date-order"><option value="dmy">Day / month / year</option><option value="mdy">Month / day / year</option></select></label>
+        </div>
+        <p id="multi-confirmation" hidden><label><input id="same-chat" type="checkbox"> These files are from the same conversation and use the same date format and displayed time.</label></p>
+        <div class="input-row">
+          <button class="action" type="submit" id="analyse">Analyse files</button>
+          <button class="action secondary" type="button" id="sample">Show sample</button>
+        </div>
+        <p class="import-status" id="status" role="status"></p>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
