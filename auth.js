@@ -104,8 +104,22 @@ try {
   }catch(err){status(err.message||'Unable to reset password.');}
   finally{b.disabled=false;}
  });
+ window.chatlensBetaEvent=async kind=>{
+   if(!accountUser||recovery)throw Error('Sign in first.');
+   const {error}=await client.from('chatlens_beta_events').insert({kind});
+   if(error && error.code!=='23505')throw error;
+ };
+ for(const button of document.querySelectorAll('[data-beta-event]')){
+   button.onclick=async()=>{
+     const owner=accountUser, parent=button.parentElement;
+     button.disabled=true;
+     try{await window.chatlensBetaEvent(button.dataset.betaEvent);if(owner===accountUser){parent.querySelector('[role=status]').textContent='Response recorded.';}}
+     catch{if(owner===accountUser)parent.querySelector('[role=status]').textContent='Could not record your response. Try again.';}
+     finally{button.disabled=false;}
+   };
+ }
  let quotaEpoch=0;
- async function refreshQuota(){const epoch=++quotaEpoch,user=accountUser,target=el('quota-status');if(!user||recovery){target.textContent='Sign in to unlock three free analyses.';return;}target.textContent='Checking allowance…';try{const {data,error}=await client.from('chatlens_usage').select('used').eq('user_id',user).maybeSingle();if(error)throw error;if(epoch===quotaEpoch)target.textContent=(3-(data?.used||0))+' of 3 free analyses remaining';}catch{if(epoch===quotaEpoch)target.textContent='Allowance unavailable. Please try again later.';}}
+ async function refreshQuota(){const epoch=++quotaEpoch,user=accountUser,target=el('quota-status');el('price-question').hidden=true;if(!user||recovery){target.textContent='Sign in to unlock three free analyses.';return;}target.textContent='Checking allowance…';try{const {data,error}=await client.from('chatlens_usage').select('used').eq('user_id',user).maybeSingle();if(error)throw error;if(epoch===quotaEpoch && (data?.used||0)>=3 && !(await window.chatlensOwnerPreview?.()) && epoch===quotaEpoch)el('price-question').hidden=false;if(epoch===quotaEpoch)target.textContent=(3-(data?.used||0))+' of 3 free analyses remaining';}catch{if(epoch===quotaEpoch)target.textContent='Allowance unavailable. Please try again later.';}}
  window.chatlensOwnerPreview=async()=>{
    const owner=accountUser;
    if(!owner||recovery)return false;
@@ -121,7 +135,7 @@ try {
  window.chatlensConsumeAnalysis=async()=>{const user=accountUser;if(!user||recovery)throw Error('Sign in to analyse your chat.');const {data,error}=await client.rpc('chatlens_consume_analysis');if(error)throw Error('Unable to verify analysis allowance. Try again later.');if(user!==accountUser||recovery)throw Error('Account changed. Sign in again.');await refreshQuota();if(data===-1)throw Error('Your three free analyses are used. Detailed Analysis is not available yet.');if(!Number.isInteger(data)||data<0||data>2)throw Error('Invalid allowance response.');return data;};
  function render(session){
   form.hidden=!!session||recovery; logout.hidden=!session||recovery; reset.hidden=!session||!recovery;
-  const nextUser=session?.user?.id||null;if(accountUser!==nextUser){activeTab='Overview';adminButton.hidden=true;adminButton.style.display='none';el('out')?.replaceChildren();if(el('file'))el('file').value='';if(el('file-info'))el('file-info').textContent='';if(el('status'))el('status').textContent='Waiting for a file.';}accountUser=nextUser;drawAccount();setTimeout(()=>{void refreshQuota();void refreshAdmin()},0);
+  const nextUser=session?.user?.id||null;if(accountUser!==nextUser){activeTab='Overview';adminButton.hidden=true;adminButton.style.display='none';el('out')?.replaceChildren();if(el('file'))el('file').value='';if(el('file-info'))el('file-info').textContent='';if(el('status'))el('status').textContent='Waiting for a file.';}accountUser=nextUser;window.refreshWeekly?.(recovery?null:accountUser);for(const box of document.querySelectorAll('#price-question [role=status], #weekly-box span[role=status]'))box.textContent='';drawAccount();setTimeout(()=>{void refreshQuota();void refreshAdmin()},0);
   showPlan(recovery?null:session);
   if(recovery&&session){status('Enter and confirm your new password.');return;}
   el('account-email-display').textContent=session?.user?.email||'';
@@ -149,3 +163,4 @@ try {
  });
  logout.addEventListener('click',async()=>{try{const {error}=await client.auth.signOut();if(error)throw error;render(null);}catch(err){status(err.message||'Sign out failed.');}});
 }catch{status('Account service unavailable. Sign in is required for analysis.');}
+
