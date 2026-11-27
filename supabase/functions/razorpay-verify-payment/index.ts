@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
 
     if (
       !record.test_mode ||
-      record.amount !== 50000 ||
+      record.amount !== 29900 ||
       record.currency !== "INR" ||
       record.plan !== "detailed_analysis" ||
       !["created", "paid"].includes(record.status)
