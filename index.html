@@ -19,7 +19,7 @@ button:disabled{opacity:.4} .bar{background:none;display:flex;overflow:hidden;he
 <label>My question <select id="weekly-goal"><option value="frequency">How often do we check in?</option><option value="starters">Who starts the day’s conversation?</option></select></label>
 <label><input type="checkbox" id="weekly-measure"> Share check-in dates with ChatLens to help evaluate the beta. Chat details stay on this device.</label>
 <p id="weekly-message" role="status"></p><button type="button" id="weekly-stop" hidden>Stop following on this device</button>
-<details><summary>What makes weekly check-ins difficult?</summary><button type="button" data-beta-event="export_effort">Exporting the chat</button><button type="button" data-beta-event="update_value">The update tells me too little</button><button type="button" data-beta-event="other_reason">Another reason</button><span role="status"></span></details></details><p>Date format: <select id="dateformat"><option value="dmy">Day / month / year</option><option value="mdy">Month / day / year</option></select></p><details id="weekly-check" hidden><summary>Follow one chat · Free weekly check-in</summary><p>See what changes when you bring back a fresh export of the same WhatsApp chat. Weekly check-ins use none of your three free reports.</p><label>What would you like to follow? <select id="weekly-focus"><option value="rhythm">Conversation rhythm</option><option value="participation">Participation</option></select></label><p><label>Choose a WhatsApp export <input type="file" id="weekly-file" accept=".txt,.zip"></label></p><p id="weekly-note" role="status"></p><button id="weekly-clear" type="button" hidden>Forget this chat</button></details><div id="dropzone" class="dropzone"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 16V4m-5 5 5-5 5 5M4 15v5h16v-5"/></svg><h3>Import your WhatsApp export</h3><p>TXT or ZIP · With or without media · Up to 200 MB ZIP</p><button id="pick-file" type="button" disabled>Browse files</button><input disabled id="file" type="file" accept=".txt,.zip,text/plain,application/zip" multiple hidden><p id="file-info">Select one export, or multiple exports of the same conversation. Combined files must use the same date format and displayed clock.</p></div><p id="status" role="status">Waiting for a file.</p></section><section id="out"></section><section class="card security-footer" aria-labelledby="security-heading"><h2 id="security-heading">Your privacy. Our priority.</h2><p class="security-subtitle">Built with privacy-conscious safeguards.</p><div class="security-grid"><span>✓ On-device chat processing</span><span>✓ HTTPS connection</span><span>✓ Account-based access controls</span><span>✓ Encrypted new saved reports</span></div><details><summary>Security &amp; data protection measures</summary><p>Chat exports and compatibility birthdates are processed in your browser. ChatLens does not upload chat content or generated reports to its backend. Account authentication, usage counts and support requests are handled by Supabase.</p><p>New locally saved reports use AES-256-GCM encryption with a user-chosen passphrase and PBKDF2-SHA-256 key derivation. Older saved reports and exported PDFs may be unencrypted.</p><p>Database row-level access policies and account-linked usage limits are designed to restrict access to your own records. Account changes clear the current report. Content Security Policy and referrer restrictions help limit external connections and information leakage.</p><p>No advertising or advertising tracking scripts are included. Internet access is required for account authentication and quota verification. Security measures are not a guarantee against all risks; this beta has not undergone an independent security audit.</p></details></section><footer>ChatLens · A product by Vespa Labs · Beta V48</footer></main><script>
+<details><summary>What makes weekly check-ins difficult?</summary><button type="button" data-beta-event="export_effort">Exporting the chat</button><button type="button" data-beta-event="update_value">The update tells me too little</button><button type="button" data-beta-event="other_reason">Another reason</button><span role="status"></span></details></details><p>Date format: <select id="dateformat"><option value="dmy">Day / month / year</option><option value="mdy">Month / day / year</option></select></p><div id="dropzone" class="dropzone"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 16V4m-5 5 5-5 5 5M4 15v5h16v-5"/></svg><h3>Import your WhatsApp export</h3><p>TXT or ZIP · With or without media · Up to 200 MB ZIP</p><button id="pick-file" type="button" disabled>Browse files</button><input disabled id="file" type="file" accept=".txt,.zip,text/plain,application/zip" multiple hidden><p id="file-info">Select one export, or multiple exports of the same conversation. Combined files must use the same date format and displayed clock.</p></div><p id="status" role="status">Waiting for a file.</p></section><section id="out"></section><section class="card security-footer" aria-labelledby="security-heading"><h2 id="security-heading">Your privacy. Our priority.</h2><p class="security-subtitle">Built with privacy-conscious safeguards.</p><div class="security-grid"><span>✓ On-device chat processing</span><span>✓ HTTPS connection</span><span>✓ Account-based access controls</span><span>✓ Encrypted new saved reports</span></div><details><summary>Security &amp; data protection measures</summary><p>Chat exports and compatibility birthdates are processed in your browser. ChatLens does not upload chat content or generated reports to its backend. Account authentication, usage counts and support requests are handled by Supabase.</p><p>New locally saved reports use AES-256-GCM encryption with a user-chosen passphrase and PBKDF2-SHA-256 key derivation. Older saved reports and exported PDFs may be unencrypted.</p><p>Database row-level access policies and account-linked usage limits are designed to restrict access to your own records. Account changes clear the current report. Content Security Policy and referrer restrictions help limit external connections and information leakage.</p><p>No advertising or advertising tracking scripts are included. Internet access is required for account authentication and quota verification. Security measures are not a guarantee against all risks; this beta has not undergone an independent security audit.</p></details></section><footer>ChatLens · A product by Vespa Labs · Beta V48</footer></main><script>
 const $=id=>document.getElementById(id),out=$('out');let currentImport=0;$('refresh-app').onclick=()=>{if('serviceWorker'in navigator)navigator.serviceWorker.getRegistration().then(r=>r?.update()).finally(()=>location.reload());else location.reload()};$('show-password').onclick=()=>{const p=$('account-password'),b=$('show-password'),show=p.type==='password';p.type=show?'text':'password';b.setAttribute('aria-pressed',String(show));b.setAttribute('aria-label',show?'Hide password':'Show password')};
 
 $('consent').onchange=()=>{$('file').disabled=!$('consent').checked;if(!$('consent').checked){out.innerHTML='';$('file').value='';$('status').textContent='Waiting for a file.';}};
@@ -49,8 +49,8 @@ function weekStats(messages, end) {
   return {days: first.size, starters: new Set(first.values()).size};
 }
 
-async function weeklyAnchor(row) {
-  const bytes = new TextEncoder().encode(JSON.stringify([+row.t, row.name, row.body]));
+async function weeklyAnchor(row, legacyOwner) {
+  const bytes = new TextEncoder().encode(JSON.stringify(legacyOwner ? [legacyOwner,+row.t,row.name,row.body] : [+row.t,row.name,row.body]));
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 }
@@ -74,12 +74,15 @@ function weekLabel(end) {
 async function runWeekly(messages, owner, stillActive) {
   const key = 'chatlens-weekly-v1:' + owner;
   const saved = localStorage.getItem(key);
-  const prior = saved ? JSON.parse(saved) : null;
+  let prior = saved ? JSON.parse(saved) : null;
   const last = messages[messages.length - 1];
   const end = +last.t;
   if (prior) {
+    const legacy = prior.end == null && Number.isFinite(prior.time);
+    if (legacy && !messages.some(row=>+row.t===prior.time)) throw Error('Choose the updated export of your followed chat.');
+    if (legacy) prior = {...prior, end:prior.time, goal:$('weekly-goal').value, stats:weekStats(messages.filter(row=>+row.t<=prior.time),prior.time)};
     const overlap = messages.filter(row => +row.t === prior.end);
-    const matches = await Promise.all(overlap.map(weeklyAnchor));
+    const matches = await Promise.all(overlap.map(row=>weeklyAnchor(row,legacy ? owner : null)));
     if (!matches.includes(prior.anchor)) throw Error('Choose a fresh export of the followed conversation that includes the previous check-in date.');
     if (Date.now() - prior.savedAt < 7 * weeklyDay || end - prior.end < 7 * weeklyDay) {
       throw Error('Your next check-in needs a week between imports and seven more days of chat history.');
@@ -109,6 +112,7 @@ function refreshWeekly(owner) {
   try {
     const prior = JSON.parse(localStorage.getItem('chatlens-weekly-v1:' + owner));
     if (!prior) return;
+    if(prior.end == null){$('weekly-stop').hidden=false;$('weekly-message').textContent=prior.note || '';return;}
     $('weekly-goal').value = prior.goal;
     $('weekly-goal').disabled = true;
     $('weekly-measure').checked = prior.measure;
@@ -297,48 +301,7 @@ block('A note before you go','heading');block('This report describes patterns in
 const saveReport=document.createElement('button');saveReport.type='button';saveReport.textContent='Save to My Reports';pdfButton.after(saveReport);const toolbar=document.createElement('div');toolbar.className='report-toolbar';const menu=document.createElement('details');menu.className='export-menu';const summary=document.createElement('summary');summary.textContent='Export report';menu.append(summary);const actions=document.createElement('div');actions.className='export-actions';$('print').before(toolbar);toolbar.append(menu);menu.append(actions);for(const [button,label] of [[pdfButton,'Download PDF'],[saveReport,'Save to My Reports'],[shareButton,'Share PDF'],[$('print'),'Print / Save PDF']]){button.textContent=label;actions.append(button);button.addEventListener('click',()=>menu.open=false)};saveReport.onclick=()=>{try{window.dispatchEvent(new CustomEvent('chatlens-save-report',{detail:{file:reportPDF(),notify:message=>$('status').textContent=message}}));}catch(e){$('status').textContent='Unable to save report.';}};
 pdfButton.onclick=()=>{const url=URL.createObjectURL(reportPDF());const a=document.createElement('a');a.href=url;a.download='ChatLens-'+names.join('-').replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,80)+'.pdf';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)};shareButton.onclick=async()=>{const file=reportPDF();try{if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'ChatLens report'});else pdfButton.click()}catch(e){if(e.name!=='AbortError')pdfButton.click()}};$('print').onclick=()=>{out.querySelectorAll('details').forEach(x=>x.open=true);window.print()};enableComparison();$('status').textContent='Detailed analysis complete.';
 }catch(err){if($('consent').checked&&$('file').files[0]===f)$('status').textContent=err.message;}};
-(()=>{
- const box=$('weekly-check'), file=$('weekly-file'), note=$('weekly-note'), focus=$('weekly-focus'), clear=$('weekly-clear');
- const owner=()=>window.chatlensAnalysisOwner?.(), key=id=>'chatlens-weekly-v1:'+id;
- const day=t=>Date.UTC(t.getFullYear(),t.getMonth(),t.getDate())/86400000;
- const label=n=>new Date(n*86400000).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
- let current, generation=0;
- function refresh(){
-   const id=owner();current=id;generation++;file.value='';box.hidden=!id;file.disabled=!$('consent').checked;
-   let saved;try{saved=id&&JSON.parse(localStorage.getItem(key(id)))}catch{}
-   clear.hidden=!saved;focus.value=saved?.focus||'rhythm';note.textContent=saved?saved.note:'Choose an export covering at least eight calendar dates to start. Your baseline stays on this device.';
- }
- new MutationObserver(refresh).observe($('account-logout'),{attributes:true,attributeFilter:['hidden']});
- $('consent').addEventListener('change',refresh);box.addEventListener('toggle',()=>{if(current!==owner())refresh()});refresh();
- clear.onclick=()=>{if(owner()&&confirm('Remove this weekly baseline from this device?')){localStorage.removeItem(key(owner()));refresh()}};
- file.onchange=async()=>{
-   const id=owner(), seq=++generation, f=file.files[0], format=$('dateformat').value, selected=focus.value;
-   const valid=()=>owner()===id&&seq===generation&&$('consent').checked&&$('dateformat').value===format;
-   if(!id||!f||!valid())return;
-   try{
-    const limit=await(window.chatlensUploadLimit?.()??200000000);if(f.size>limit)throw Error('This export exceeds your upload limit.');
-    const {raw}=await readFile(f);if(!valid())return;
-    const rows=parse(raw).filter(r=>r.name);
-    if(!rows.length)throw Error('No messages found. Check the date format above.');
-    const last=day(rows[rows.length-1].t),start=last-7;
-    if(day(rows[0].t)>start)throw Error('Use a longer export to cover seven days before the latest message date.');
-    const old=JSON.parse(localStorage.getItem(key(id))||'null');
-    const token=async r=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify([id,r.t.getTime(),r.name,r.body])))),b=>b.toString(16).padStart(2,'0')).join('');
-    if(old){
-      const matches=rows.filter(r=>r.t.getTime()===old.time);
-      if(!(await Promise.all(matches.map(token))).includes(old.anchor))throw Error('Choose an updated export of the same chat with overlapping history, using the original date format.');
-      if(last-old.last<7)throw Error('Your baseline is saved. Come back with messages dated '+label(old.last+7)+' or later.');
-    }
-    const week=rows.filter(r=>day(r.t)>=start&&day(r.t)<last),active=new Set(week.map(r=>day(r.t))).size,people=new Set(week.map(r=>r.name)).size;
-    const summary=label(start)+' – '+label(last-1)+'. ';
-    let message=summary+(old?(selected==='rhythm'?'Conversation was active on '+active+' days this week and '+old.active+' days in the earlier week.':'This week '+people+' people wrote in the chat, compared with '+old.people+' in the earlier week.'):'Baseline saved with '+active+' active days and '+people+' participants. Bring back an updated export in a week.');
-    if(old&&selected==='rhythm')message+=active>old.active?' The conversation was spread across more of the week.':active<old.active?' Messages were concentrated into fewer days.':' The chat kept a similar weekly rhythm.';
-    const end=rows[rows.length-1],anchor=await token(end);
-    if(!valid())return;
-    localStorage.setItem(key(id),JSON.stringify({time:end.t.getTime(),anchor,last,active,people,focus:selected,note:message}));refresh();
-   }catch(e){if(valid())note.textContent=e.message}finally{if(seq===generation)file.value=''}
- };
-})();</script><script type="module" src="./auth.js?v=dashboardFeedback2"></script><style id="chatlens-time-palette">
+</script><script type="module" src="./auth.js?v=dashboardFeedback2"></script><style id="chatlens-time-palette">
 :root{color-scheme:light dark}
 body{background:var(--bg)!important;color:var(--text)!important;transition:background-color 1.2s ease,color 1.2s ease}
 body h1:not(.hero h1){background:none!important;color:var(--text)!important}
@@ -405,4 +368,4 @@ body:not(.light) #refresh-app{color:#f5f3ff!important}
 </style>
 <script id="chatlens-local-time-palette">
 (()=>{const light={bg:"#f6f5fa",card:"#ffffff",text:"#25223a",muted:"#625d74",accent:"#6941c6",accentStrong:"#7b55d4",soft:"#efe7f6",line:"#e7dfec",heroBg:"#f3edf9",heroSecondary:"#e3d4f2",teal:"#6941c6"};const dark={bg:"#101322",card:"#1c2035",text:"#f5f3ff",muted:"#b9bdd6",accent:"#a78bfa",accentStrong:"#7653d6",soft:"#332a3d",line:"#3a3342",heroBg:"#15172f",heroSecondary:"#392b65",teal:"#a78bfa"};const keys={bg:"--bg",card:"--card",text:"--text",muted:"--muted",accent:"--accent",accentStrong:"--accent-strong",soft:"--soft",line:"--line",heroBg:"--hero-bg",heroSecondary:"--hero-secondary",teal:"--teal"};function mix(a,b,t){const x=a.match(/[0-9a-f]{2}/gi).map(v=>parseInt(v,16)),y=b.match(/[0-9a-f]{2}/gi).map(v=>parseInt(v,16));return"#"+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,"0")).join("")}function level(){const d=new Date(),m=d.getHours()*60+d.getMinutes();if(m>=1200||m<360)return 1;if(m>=1080)return(m-1080)/120;if(m>=360&&m<480)return 1-(m-360)/120;return 0}function update(){const n=level();document.body.classList.toggle("light",n<.5);document.body.style.colorScheme=n<.5?"light":"dark";for(const[k,v]of Object.entries(keys))document.body.style.setProperty(v,mix(light[k],dark[k],n));const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",mix(light.bg,dark.bg,n))}update();window.setInterval(update,60000);document.addEventListener("visibilitychange",update);window.addEventListener("pageshow",update)})();
-</script><style>.account-switch,.beta-survey label{display:grid;gap:.45rem;font-weight:600}.account-switch select,.beta-survey select,.beta-survey textarea{box-sizing:border-box;width:100%;min-height:44px;padding:.65rem .8rem;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:inherit;font-size:16px}.account-switch{margin:1rem 0}.beta-survey{display:grid;gap:1rem;max-width:36rem}.beta-survey h3,.beta-survey p{margin:0}.beta-survey button{justify-self:start}.beta-survey small{color:var(--muted)}</style></body><script>if("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./sw.js").catch(console.warn);</script></html>
+</script><style>.account-switch,.beta-survey label{display:grid;gap:.45rem;font-weight:600}.account-switch select,.beta-survey select,.beta-survey textarea{box-sizing:border-box;width:100%;min-height:44px;padding:.65rem .8rem;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:inherit;font-size:16px}.account-switch{margin:1rem 0}.beta-survey{display:grid;gap:1rem;max-width:36rem}.beta-survey h3,.beta-survey p{margin:0}.beta-survey button{justify-self:start}.beta-survey small{color:var(--muted)}</style><style>#weekly-box>label{display:block;margin:.8rem 0}#weekly-box select{display:block;max-width:100%;margin-top:.3rem}#weekly-stop[hidden]{display:none!important}</style></body><script>if("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./sw.js").catch(console.warn);</script></html>
