@@ -47,7 +47,7 @@ function showComparison(){
  pauses.sort((a,b)=>a-b);
  const n=pauses.length;
  const timing=n?fmt((pauses[Math.floor(n/2)]+pauses[Math.floor((n-1)/2)])/2)+' minutes across '+fmt(n)+' speaker changes':'Too little data';
- out.insertAdjacentHTML('afterbegin',card('Detailed Analysis · Private preview','<h3>Conversation sessions</h3><p>'+fmt(sessions)+' sessions across '+fmt(msgs.length)+' messages. A new session starts after six hours of silence.</p><h3>Typical time between speakers</h3><p>'+timing+'. This median excludes breaks of six hours or more. A change of speaker does not necessarily mean a direct reply.</p>')+'<h2>Free report</h2>');
+ out.insertAdjacentHTML('afterbegin',card('Detailed Analysis · Private preview','<h3>Conversation sessions</h3><p>'+fmt(sessions)+' sessions across '+fmt(msgs.length)+' messages. A new session starts after six hours of silence.</p><h3>Typical time between speakers</h3><p>'+timing+'. This median excludes breaks of six hours or more. A change of speaker does not necessarily mean a direct reply.</p>'));
 }
 let names=[...new Set(msgs.map(r=>r.name))];
 const participants = new Map();
@@ -80,12 +80,12 @@ function enableComparison() {
   updateLabel();
   out.prepend(toggle);
 }
-if (analysisOwner !== '4d036765-ee5e-4725-9657-0ad06e945b6b') {
+if (!ownerPreview) {
   showFree();
   $('status').textContent = 'Free analysis complete.';
   return;
 }
-if(names.length>2){const counts=new Map(),monthly=new Map();for(const r of msgs){counts.set(r.name,(counts.get(r.name)||0)+1);const k=day(r.t).slice(0,7);monthly.set(k,(monthly.get(k)||0)+1)}out.innerHTML=topicNarrative(msgs,$('context-type').value)+card('Group participation','<p>'+fmt(msgs.length)+' messages · '+names.length+' participants.</p>'+[...counts].sort((a,b)=>b[1]-a[1]).slice(0,50).map(([n,v])=>'<p>'+esc(n)+' · '+fmt(v)+' messages ('+(100*v/msgs.length).toFixed(1)+'%)</p>').join('')+'<p>Showing up to 50 participants. Message volume does not measure contribution quality.</p>')+card('Monthly activity',[...monthly].slice(-12).map(([k,v])=>'<p>'+esc(k)+' · '+fmt(v)+' messages</p>').join(''));out.insertAdjacentHTML('beforeend',card('Media inventory','<p>Images: '+media.images+' · Videos: '+media.videos+' · Audio: '+media.audio+' · Documents: '+media.documents+'</p><p>Counts are based on archive filenames.</p>'));enableComparison();$('status').textContent='Detailed group analysis complete.';return}if(names.length!==2)throw Error('At least two participants are required.');
+if(names.length>2){const counts=new Map(),monthly=new Map();for(const r of msgs){counts.set(r.name,(counts.get(r.name)||0)+1);const k=day(r.t).slice(0,7);monthly.set(k,(monthly.get(k)||0)+1)}out.innerHTML=topicNarrative(msgs,$('context-type').value)+card('Group participation','<p>'+fmt(msgs.length)+' messages · '+names.length+' participants.</p>'+[...counts].sort((a,b)=>b[1]-a[1]).slice(0,50).map(([n,v])=>'<p>'+esc(n)+' · '+fmt(v)+' messages ('+(100*v/msgs.length).toFixed(1)+'%)</p>').join('')+'<p>Showing up to 50 participants. Message volume does not measure contribution quality.</p>')+card('Monthly activity',[...monthly].slice(-12).map(([k,v])=>'<p>'+esc(k)+' · '+fmt(v)+' messages</p>').join(''));out.insertAdjacentHTML('beforeend',card('Media inventory','<p>Images: '+media.images+' · Videos: '+media.videos+' · Audio: '+media.audio+' · Documents: '+media.documents+'</p><p>Counts are based on archive filenames.</p>'));showComparison();enableComparison();$('status').textContent='Detailed group analysis complete.';return}if(names.length!==2)throw Error('At least two participants are required.');
 let stats=names.map(n=>({n,m:[],starts:0,replies:[],calls:[],rules:rules.map(()=>[])})),days=new Map,hours=new Map,prev=null,longest=0;
 for(let r of msgs){let i=names.indexOf(r.name),s=stats[i];s.m.push(r);for(let [map,key] of [[days,day(r.t)],[hours,r.t.getHours()]]){if(!map.has(key))map.set(key,[0,0]);map.get(key)[i]++}let gap=prev?(r.t-prev.t)/60000:0;longest=Math.max(longest,gap);if(!prev||gap>=360)s.starts++;else if(prev.name!==r.name)s.replies.push(gap);rules.forEach((rule,j)=>{if(rule[1].test(r.body))s.rules[j].push(r)});prev=r;}
 for(let r of calls){let i=names.indexOf(r.name);if(i>=0)stats[i].calls.push(r)}
