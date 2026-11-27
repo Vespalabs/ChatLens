@@ -144,6 +144,30 @@ body:not(.light){color-scheme:dark}
 @media(prefers-reduced-motion:reduce){body,body .card,body .tabs,body .home-nav,body .dropzone,body .hero,body .hero-demo,body button,body input,body select,body textarea{transition:none!important}}
 body.light .hero-kicker span,body:not(.light) .hero-kicker span{background:var(--accent)!important;box-shadow:0 0 12px var(--accent)!important}
 </style>
+<style id="v48-heading-alignment">
+/* Keep primary and section headings on the same left content edge. */
+.hero h1,
+.card h2,
+.card h3,
+.panel h2,
+.panel h3,
+.dropzone h3 {
+  text-align: left !important;
+}
+.card h2,
+.panel h2 {
+  margin: 0 0 12px;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.card h3,
+.panel h3,
+.dropzone h3 {
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.hero h1 { max-width: 18ch; }
+</style>
 <script id="chatlens-local-time-palette">
 (()=>{const light={bg:"#f6f5fa",card:"#ffffff",text:"#25223a",muted:"#625d74",accent:"#6941c6",accentStrong:"#7b55d4",soft:"#efe7f6",line:"#e7dfec",heroBg:"#f3edf9",heroSecondary:"#e3d4f2",teal:"#6941c6"};const dark={bg:"#101322",card:"#1c2035",text:"#f5f3ff",muted:"#b9bdd6",accent:"#a78bfa",accentStrong:"#7653d6",soft:"#332a3d",line:"#3a3342",heroBg:"#15172f",heroSecondary:"#392b65",teal:"#a78bfa"};const keys={bg:"--bg",card:"--card",text:"--text",muted:"--muted",accent:"--accent",accentStrong:"--accent-strong",soft:"--soft",line:"--line",heroBg:"--hero-bg",heroSecondary:"--hero-secondary",teal:"--teal"};function mix(a,b,t){const x=a.match(/[0-9a-f]{2}/gi).map(v=>parseInt(v,16)),y=b.match(/[0-9a-f]{2}/gi).map(v=>parseInt(v,16));return"#"+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,"0")).join("")}function level(){const d=new Date(),m=d.getHours()*60+d.getMinutes();if(m>=1200||m<360)return 1;if(m>=1080)return(m-1080)/120;if(m>=360&&m<480)return 1-(m-360)/120;return 0}function update(){const n=level();document.body.classList.toggle("light",n<.5);document.body.style.colorScheme=n<.5?"light":"dark";for(const[k,v]of Object.entries(keys))document.body.style.setProperty(v,mix(light[k],dark[k],n));const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",mix(light.bg,dark.bg,n))}update();window.setInterval(update,60000);document.addEventListener("visibilitychange",update);window.addEventListener("pageshow",update)})();
 </script></body><script>if("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./sw.js").catch(console.warn);</script></html>
