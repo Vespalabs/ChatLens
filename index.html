@@ -47,7 +47,11 @@ function showComparison(){
  pauses.sort((a,b)=>a-b);
  const n=pauses.length;
  const timing=n?fmt((pauses[Math.floor(n/2)]+pauses[Math.floor((n-1)/2)])/2)+' minutes across '+fmt(n)+' speaker changes':'Too little data';
- out.insertAdjacentHTML('afterbegin',card('Detailed Analysis · Private preview','<h3>Conversation sessions</h3><p>'+fmt(sessions)+' sessions across '+fmt(msgs.length)+' messages. A new session starts after six hours of silence.</p><h3>Typical time between speakers</h3><p>'+timing+'. This median excludes breaks of six hours or more. A change of speaker does not necessarily mean a direct reply.</p>'));
+ const rhythm=sessions===1
+   ? 'The messages here form one stretch of conversation. If a moment stayed with you, read the messages around it together. A quick exchange can be a joke, a decision or someone asking for help.'
+   : 'This chat was picked up again after a break '+(sessions===2?'once':fmt(sessions-1)+' times')+'. Think back to one of those returns. Was someone checking in, carrying on an earlier discussion or bringing something new?';
+ const exchanges=n<3?'There are few changes of speaker here, so there is little to say about a usual pace.':names.length>2?'In a group, several conversations can unfold at once. When you look at a busy stretch, notice whose question brought people into the discussion.':'For a closer look, find an exchange where the pace felt different to you. What did the words themselves tell you about what each person needed?';
+ out.insertAdjacentHTML('afterbegin',card('Detailed Analysis · Private preview','<p>'+rhythm+'</p><p>'+exchanges+'</p><h3>Conversation sessions</h3><p>'+fmt(sessions)+' sessions across '+fmt(msgs.length)+' messages. A new session starts after six hours of silence.</p><h3>Typical time between speakers</h3><p>'+timing+'. This median excludes breaks of six hours or more. A change of speaker does not necessarily mean a direct reply.</p>'));
 }
 let names=[...new Set(msgs.map(r=>r.name))];
 const participants = new Map();
