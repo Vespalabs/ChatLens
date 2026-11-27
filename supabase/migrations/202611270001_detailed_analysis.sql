@@ -48,7 +48,7 @@ returns trigger language plpgsql security definer set search_path=''
 as $function$
 begin
   if new.status='paid' and new.verified_at is not null and new.razorpay_payment_id is not null
-    and ((new.plan='detailed_analysis' and new.amount=50000 and new.currency='INR')
+    and ((new.plan='detailed_analysis' and new.amount=29900 and new.currency='INR')
       or (new.plan='premium_report' and new.amount=9900 and new.currency='INR')) then
     insert into public.chatlens_purchases(user_id,payment_id,product,active,test_mode)
       values(new.user_id,new.id,new.plan,not new.test_mode,new.test_mode)
