@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       }, 429);
     }
 
-    const amount = 50000;
+    const amount = 29900;
     const currency = "INR";
     const plan = "detailed_analysis";
 
