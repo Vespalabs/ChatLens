@@ -106,6 +106,16 @@ try {
  });
  let quotaEpoch=0;
  async function refreshQuota(){const epoch=++quotaEpoch,user=accountUser,target=el('quota-status');if(!user||recovery){target.textContent='Sign in to unlock three free analyses.';return;}target.textContent='Checking allowance…';try{const {data,error}=await client.from('chatlens_usage').select('used').eq('user_id',user).maybeSingle();if(error)throw error;if(epoch===quotaEpoch)target.textContent=(3-(data?.used||0))+' of 3 free analyses remaining';}catch{if(epoch===quotaEpoch)target.textContent='Allowance unavailable. Please try again later.';}}
+ window.chatlensOwnerPreview=async()=>{
+   const owner=accountUser;
+   if(!owner||recovery)return false;
+   try {
+     const {data,error}=await client.auth.getUser();
+     if(error||data.user?.id!==owner||data.user.email?.toLowerCase()!=='amalkbaxi@yahoo.co.uk')return false;
+     const permission=await client.rpc('chatlens_is_admin');
+     return !permission.error&&permission.data===true&&accountUser===owner&&!recovery;
+   }catch{return false;}
+ };
  window.chatlensAnalysisOwner=()=>recovery?null:accountUser;
  window.chatlensCanAnalyse=()=>!!accountUser&&!recovery;
  window.chatlensConsumeAnalysis=async()=>{const user=accountUser;if(!user||recovery)throw Error('Sign in to analyse your chat.');const {data,error}=await client.rpc('chatlens_consume_analysis');if(error)throw Error('Unable to verify analysis allowance. Try again later.');if(user!==accountUser||recovery)throw Error('Account changed. Sign in again.');await refreshQuota();if(data===-1)throw Error('Your three free analyses are used. Detailed Analysis is not available yet.');if(!Number.isInteger(data)||data<0||data>2)throw Error('Invalid allowance response.');return data;};
