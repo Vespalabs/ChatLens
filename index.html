@@ -329,7 +329,7 @@ body:not(.light) .hero h1,body:not(.light) .hero p,body:not(.light) .hero small,
 body .hero h1{background:none!important;color:var(--hero-ink)!important}
 body.light .hero h1 em,body:not(.light) .hero h1 em{color:var(--accent)!important}
 body .hero-demo{background:color-mix(in srgb,var(--card) 78%,transparent)!important;border-color:var(--line)!important;color:var(--text)!important;transition:background-color 1.2s ease,color 1.2s ease,border-color 1.2s ease}
-body button:not(.tabs button),body .upload,body .hero-cta{background:linear-gradient(115deg,var(--accent-strong),var(--accent))!important;color:#fff!important;border-color:var(--accent)!important;transition:background-color 1.2s ease,color 1.2s ease,border-color 1.2s ease}
+body button:not(.tabs button),body .upload,body .hero-cta{background:var(--accent-strong)!important;color:#fff!important;border-color:var(--accent)!important;transition:background-color 1.2s ease,color 1.2s ease,border-color 1.2s ease}
 body .tabs button.active,body .unified-nav button[aria-expanded=true],body.light .unified-nav button[aria-expanded=true]{background:var(--soft)!important;color:var(--text)!important;border-color:var(--accent)!important}
 body .home-nav a{border-color:var(--line)!important;color:var(--text)!important}
 body.light a:not(.hero-cta){color:var(--accent)!important}
@@ -379,9 +379,30 @@ body.light .hero-kicker span,body:not(.light) .hero-kicker span{background:var(-
 body:not(.light) #refresh-app{color:#f5f3ff!important}
 .brand-icon{width:46px;height:46px;object-fit:contain;border-radius:12px;box-shadow:none!important}
 </style>
-<script id="chatlens-local-time-palette">
-(()=>{const light={bg:"#f6f5fa",card:"#ffffff",text:"#25223a",muted:"#625d74",accent:"#6941c6",accentStrong:"#7b55d4",soft:"#efe7f6",line:"#e7dfec",heroBg:"#f3edf9",heroSecondary:"#e3d4f2",teal:"#6941c6"};const dark={bg:"#101322",card:"#1c2035",text:"#f5f3ff",muted:"#b9bdd6",accent:"#a78bfa",accentStrong:"#7653d6",soft:"#332a3d",line:"#3a3342",heroBg:"#15172f",heroSecondary:"#392b65",teal:"#a78bfa"};const keys={bg:"--bg",card:"--card",text:"--text",muted:"--muted",accent:"--accent",accentStrong:"--accent-strong",soft:"--soft",line:"--line",heroBg:"--hero-bg",heroSecondary:"--hero-secondary",teal:"--teal"};function mix(a,b,t){const x=a.match(/[0-9a-f]{2}/gi).map(v=>parseInt(v,16)),y=b.match(/[0-9a-f]{2}/gi).map(v=>parseInt(v,16));return"#"+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,"0")).join("")}function level(){const d=new Date(),m=d.getHours()*60+d.getMinutes();if(m>=1200||m<360)return 1;if(m>=1080)return(m-1080)/120;if(m>=360&&m<480)return 1-(m-360)/120;return 0}function update(){const n=level();document.body.classList.toggle("light",n<.5);document.body.style.colorScheme=n<.5?"light":"dark";for(const[k,v]of Object.entries(keys))document.body.style.setProperty(v,mix(light[k],dark[k],n));const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",mix(light.bg,dark.bg,n))}update();window.setInterval(update,60000);document.addEventListener("visibilitychange",update);window.addEventListener("pageshow",update)})();
-</script><style>.account-switch,.beta-survey label{display:grid;gap:.45rem;font-weight:600}.account-switch select,.beta-survey select,.beta-survey textarea{box-sizing:border-box;width:100%;min-height:44px;padding:.65rem .8rem;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:inherit;font-size:16px}.account-switch{margin:1rem 0}.beta-survey{display:grid;gap:1rem;max-width:36rem}.beta-survey h3,.beta-survey p{margin:0}.beta-survey button{justify-self:start}.beta-survey small{color:var(--muted)}</style><style>#weekly-box:not(:has(#weekly-mode:checked)) #weekly-options{display:none}#weekly-options>label,#weekly-box>label{display:block;margin:.8rem 0}#weekly-box select{display:block;max-width:100%;margin-top:.3rem}#weekly-stop[hidden]{display:none!important}</style><style>.chat-context>label{display:block;margin:.65rem 0}.chat-context .context-caption{display:block;font:inherit;font-size:.875rem;color:var(--muted)}#intro #context-type{box-sizing:border-box;display:block;width:100%;min-height:48px;margin:6px 0 12px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background-color:var(--card);color:var(--text);font:500 max(16px,1rem)/1.4 system-ui,sans-serif}#intro #context-type:focus-visible{outline:2px solid var(--accent);outline-offset:2px}</style><style id="app-type">
+<script id="chatlens-local-time-palette">(()=>{
+const stops=[
+ [0,['#111426','#20243b','#35315a','#64509a']],
+ [420,['#fbf1e8','#fffaf5','#f5d8c3','#984725']],
+ [780,['#eff4fc','#fafcff','#d4e3fc','#345995']],
+ [1050,['#f9edf3','#fff8fb','#efd1e2','#933760']],
+ [1320,['#111426','#20243b','#35315a','#64509a']],
+ [1440,['#111426','#20243b','#35315a','#64509a']]
+];
+function rgb(hex){return hex.slice(1).match(/../g).map(v=>parseInt(v,16))}
+function blend(a,b,t){const end=rgb(b);return '#'+rgb(a).map((v,i)=>Math.round(v+(end[i]-v)*t).toString(16).padStart(2,'0')).join('')}
+function luminance(hex){const [r,g,b]=rgb(hex).map(v=>{const x=v/255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b}
+function update(){const now=new Date(),m=now.getHours()*60+now.getMinutes(),i=stops.findIndex(([time])=>time>m);
+const [a,start]=stops[i-1],[b,end]=stops[i];let t=(m-a)/(b-a);t=t*t*(3-2*t);
+const [bg,card,glow,button]=start.map((v,j)=>blend(v,end[j],t));
+const light=luminance(bg)>.18,ink=light?'#100e18':'#ffffff';
+const muted=light&&luminance(bg)>.46?'#514b5b':!light&&luminance(card)<.09?'#d0cbde':ink;
+const accent=(luminance(bg)+.05)/(luminance(button)+.05)>4.5?button:ink;
+const values={bg,card,text:ink,muted,accent,'accent-strong':button,soft:card,line:blend(card,ink,.28),'hero-bg':bg,'hero-secondary':glow,'hero-ink':ink,teal:accent};
+document.body.classList.toggle('light',light);document.body.style.colorScheme=light?'light':'dark';
+for(const [k,v] of Object.entries(values))document.body.style.setProperty('--'+k,v);
+document.querySelector('meta[name="theme-color"]')?.setAttribute('content',bg)}
+update();setInterval(update,60000);window.addEventListener('pageshow',update);document.addEventListener('visibilitychange',update)
+})();</script><style>.account-switch,.beta-survey label{display:grid;gap:.45rem;font-weight:600}.account-switch select,.beta-survey select,.beta-survey textarea{box-sizing:border-box;width:100%;min-height:44px;padding:.65rem .8rem;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:inherit;font-size:16px}.account-switch{margin:1rem 0}.beta-survey{display:grid;gap:1rem;max-width:36rem}.beta-survey h3,.beta-survey p{margin:0}.beta-survey button{justify-self:start}.beta-survey small{color:var(--muted)}</style><style>#weekly-box:not(:has(#weekly-mode:checked)) #weekly-options{display:none}#weekly-options>label,#weekly-box>label{display:block;margin:.8rem 0}#weekly-box select{display:block;max-width:100%;margin-top:.3rem}#weekly-stop[hidden]{display:none!important}</style><style>.chat-context>label{display:block;margin:.65rem 0}.chat-context .context-caption{display:block;font:inherit;font-size:.875rem;color:var(--muted)}#intro #context-type{box-sizing:border-box;display:block;width:100%;min-height:48px;margin:6px 0 12px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background-color:var(--card);color:var(--text);font:500 max(16px,1rem)/1.4 system-ui,sans-serif}#intro #context-type:focus-visible{outline:2px solid var(--accent);outline-offset:2px}</style><style id="app-type">
 body,button,input,select,textarea,h1,h2,h3,.brand,.hero h1,.hero h1 em{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
 @media screen{
 body{font-size:1rem;line-height:1.55}
@@ -399,4 +420,4 @@ body .card h2{line-height:1.25}#out th,#out td{font-size:.875rem;line-height:1.4
 #out small,#out td,#out th{font-size:9pt}
 #out h2{font-size:15pt;line-height:1.25}#out h3{font-size:12pt}
 }
-</style></body><script>if("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./sw.js").catch(console.warn);</script></html>
+</style><style>@media screen{body.light .hero,body:not(.light) .hero{background:radial-gradient(ellipse at 95% 0%,var(--hero-secondary),transparent 62%),var(--hero-bg)!important}body.light .hero :is(h1,p,small,.hero-note,.hero-kicker,.demo-head,b),body:not(.light) .hero :is(h1,p,small,.hero-note,.hero-kicker,.demo-head,b){color:var(--text)!important}}</style></body><script>if("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("./sw.js").catch(console.warn);</script></html>
