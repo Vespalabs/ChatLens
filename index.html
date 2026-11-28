@@ -314,7 +314,7 @@ block('A note before you go','heading');block('This report describes patterns in
 const saveReport=document.createElement('button');saveReport.type='button';saveReport.textContent='Save to My Reports';pdfButton.after(saveReport);const toolbar=document.createElement('div');toolbar.className='report-toolbar';const menu=document.createElement('details');menu.className='export-menu';const summary=document.createElement('summary');summary.textContent='Export report';menu.append(summary);const actions=document.createElement('div');actions.className='export-actions';$('print').before(toolbar);toolbar.append(menu);menu.append(actions);for(const [button,label] of [[pdfButton,'Download PDF'],[saveReport,'Save to My Reports'],[shareButton,'Share PDF'],[$('print'),'Print / Save PDF']]){button.textContent=label;actions.append(button);button.addEventListener('click',()=>menu.open=false)};saveReport.onclick=()=>{try{window.dispatchEvent(new CustomEvent('chatlens-save-report',{detail:{file:reportPDF(),notify:message=>$('status').textContent=message}}));}catch(e){$('status').textContent='Unable to save report.';}};
 pdfButton.onclick=()=>{const url=URL.createObjectURL(reportPDF());const a=document.createElement('a');a.href=url;a.download='ChatLens-'+names.join('-').replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,80)+'.pdf';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)};shareButton.onclick=async()=>{const file=reportPDF();try{if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'ChatLens report'});else pdfButton.click()}catch(e){if(e.name!=='AbortError')pdfButton.click()}};$('print').onclick=()=>{out.querySelectorAll('details').forEach(x=>x.open=true);window.print()};enableComparison();$('status').textContent='Detailed analysis complete.';
 }catch(err){if($('consent').checked&&$('file').files[0]===f)$('status').textContent=err.message;}};
-</script><script type="module" src="./auth.js?v=importCopy3"></script><style id="chatlens-time-palette">
+</script><script type="module" src="./auth.js?v=themeChoice1"></script><style id="chatlens-time-palette">
 :root{color-scheme:light dark}
 body{background:var(--bg)!important;color:var(--text)!important;transition:background-color 1.2s ease,color 1.2s ease}
 body h1:not(.hero h1){background:none!important;color:var(--text)!important}
@@ -391,7 +391,10 @@ const stops=[
 function rgb(hex){return hex.slice(1).match(/../g).map(v=>parseInt(v,16))}
 function blend(a,b,t){const end=rgb(b);return '#'+rgb(a).map((v,i)=>Math.round(v+(end[i]-v)*t).toString(16).padStart(2,'0')).join('')}
 function luminance(hex){const [r,g,b]=rgb(hex).map(v=>{const x=v/255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b}
-function update(){const now=new Date(),m=now.getHours()*60+now.getMinutes(),i=stops.findIndex(([time])=>time>m);
+const choices=['Automatic (local time)','Terracotta','Slate Blue','Berry','Midnight Violet'], storageKey='chatlens-theme-v1';
+let choice=choices[0];try{const saved=localStorage.getItem(storageKey);if(choices.includes(saved))choice=saved}catch{}
+window.chatlensTheme={get:()=>choice,set(value){if(!choices.includes(value))return false;choice=value;update();try{localStorage.setItem(storageKey,value);return true}catch{return false}}};
+function update(){const now=new Date(),fixed=choices.indexOf(choice),m=fixed>0?stops[fixed][0]:now.getHours()*60+now.getMinutes(),i=stops.findIndex(([time])=>time>m);
 const [a,start]=stops[i-1],[b,end]=stops[i];let t=(m-a)/(b-a);t=t*t*(3-2*t);
 const [bg,card,glow,button]=start.map((v,j)=>blend(v,end[j],t));
 const light=luminance(bg)>.18,ink=light?'#100e18':'#ffffff';
