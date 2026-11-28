@@ -1,4 +1,4 @@
-# ChatLens by EVERGROW GLOBAL SOLUTIONS PRIVATE LIMITED
+# ChatLens by Evergrow Global Pvt Ltd
 
 ChatLens is one browser-based WhatsApp conversation analysis app. Beta V48 supports TXT and compatible ZIP exports, multiple exports of the same conversation in one analysis, local statistics and historical activity, language and context cues, individual views, and printable or shareable reports.
 
